@@ -1,13 +1,15 @@
-import com.sicilly.pojo.Hello;
+import com.sicilly.pojo.User;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class MyTest {
     public static void main(String[] args) {
-        // 解析beans.xml文件，生成管理相应的Bean对象
+        // 拿到容器
         ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
-        // getBean：参数即为spring配置文件中bean的id
-        Hello hello = (Hello)context.getBean("hello");
-        System.out.println(hello.toString());
+        // 通过beans.xml中定义好的id拿到bean，转成User类
+        User user = (User)context.getBean("user");
+        // 调用user中的方法show
+        user.show();
+
     }
 }

@@ -1,6 +1,6 @@
 # spring-study
 
-## Spring概述
+## 1. Spring概述
 
 ### 简介
 
@@ -66,7 +66,7 @@ Spring 框架是一个分层架构，由 7 个定义良好的模块组成。Spri
 
 ![图片](https://mmbiz.qpic.cn/mmbiz_png/uJDAUKrGC7KtDiaOqFy5ourlJ8FTVV2FFH5GFXM4YPUGrmA2JdpPic3FwYaI1JZHBZxibaUJVXWzzTFeCayk4XAIg/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
-## IOC理论推导
+## 2. IOC理论推导
 
 1、UserDao接口
 
@@ -111,19 +111,31 @@ Spring 框架是一个分层架构，由 7 个定义良好的模块组成。Spri
 
 
 
-## HelloSpring
+## 3. HelloSpring
+
+```java
+public class MyTest {
+    public static void main(String[] args) {
+        // 解析beans.xml文件，生成管理相应的Bean对象
+        ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
+        // getBean：参数即为spring配置文件中bean的id
+        Hello hello = (Hello)context.getBean("hello");
+        System.out.println(hello.toString());
+    }
+}
+```
 
 **思考问题**
 
 - hello对象是谁创建的？
 
-  hellod对象是由sping创建的
+  hello对象是由sping创建的
 
-- hellod对象属性是怎么设置的？
+- hello对象属性是怎么设置的？
 
   hello对象的属性是由spring容器设置的
 
-这个过程就叫控制反转：
+这个过程就叫**控制反转**：
 
 **控制：**谁来控制对象的创建，传统应用程序的对象是由程序本身控制创建的，使用spring后，对象是由spring来创建的
 
@@ -137,3 +149,111 @@ IOC是一种编程思想，由主动的编程变成被动的接收
 
 OK，到了现在，我们彻底不用再程序中去改动类，要实现不同的操作，只需要在xml配置文件中进行修改，**所谓的ioc，一句话搞定：对象由spring来创建，管理，装配**
 
+## 4. IOC创建对象的方式
+
+实体类User
+
+```java
+package com.sicilly.pojo;
+
+public class User {
+    private String name;
+
+    public User(){
+        System.out.println("User的无参构造");
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void show(){
+        System.out.println("name="+name);
+    }
+}
+
+```
+
+实体类注册到bean.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<!--    id相当于要new的对象名，class相当于要new的对象的类-->
+    <bean id="user" class="com.sicilly.pojo.User">
+<!--    User类里有一个属性叫name，是一个基本类型，所以给它一个value-->
+        <property name="name" value="zhangsan"></property>
+    </bean>
+
+</beans>
+```
+
+MyTest
+
+```java
+public class MyTest {
+    public static void main(String[] args) {
+        // 拿到容器
+        ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
+        // 通过beans.xml中定义好的id拿到bean，转成User类
+        User user = (User)context.getBean("user");
+        // 调用user中的方法show
+        user.show();
+
+    }
+}
+
+```
+
+输出：
+
+```
+User的无参构造
+name=zhangsan
+```
+
+上面演示的是默认使用无参构造创建对象。
+
+假设要使用有参构造创建对象。
+
+```java
+// 有参构造
+public User(String name){
+	this.name=name;
+}
+```
+
+有以下几种方法：
+
+1. 下标赋值
+
+   ```xml
+   <bean id="user" class="com.sicilly.pojo.User">
+       <constructor-arg index="0" value="有参构造第一种"/>
+   </bean>
+   ```
+
+2. 类型（不推荐）
+
+   ```xml
+   <bean id="user" class="com.sicilly.pojo.User">
+       <constructor-arg type="java.lang.String" value="有参构造第二种"/>
+   </bean>
+   ```
+
+3. 直接通过参数名（最容易理解）		
+
+   ```xml
+   <bean id="user" class="com.sicilly.pojo.User">
+       <constructor-arg name="name" value="有参构造第三种"/>
+   </bean>
+   ```
+
+总结：在配置文件加载的时候，容器中管理的对象就已经初始化了！
