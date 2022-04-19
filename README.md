@@ -257,3 +257,68 @@ public User(String name){
    ```
 
 总结：在配置文件加载的时候，容器中管理的对象就已经初始化了！
+
+## 5. Spring配置
+
+### 别名
+
+beans.xml
+
+```xml
+<!--别名，可以通过别名获取到对象-->
+<alias name="user" alias="userNew"/>
+```
+
+MyTest.java
+
+```java
+//  使用别名
+User user = (User)context.getBean("userNew");
+```
+
+### Bean的配置
+
+beans.xml
+
+```xml
+<!--
+    id：bean的唯一标识符，也就是相当于我们学的对象名
+    class：bean对象所对应的全限定名：包名+类名
+    name:也是别名，而且name可以同时取多个别名
+-->
+<bean id="userT" class="com.sicilly.pojo.UserT" name="user2,u2">
+    <property name="name" value="zhangsan"/>
+</bean>
+```
+
+MyTest.java
+
+```java
+UserT user = (UserT)context.getBean("u2");
+```
+
+### import
+
+一般用于团队开发使用，可以将多个配置文件合并成一个
+
+MyTest.java
+
+```java
+ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+```
+
+applicationContext.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <import resource="beans.xml"/>
+    <import resource="beans2.xml"/>
+    <import resource="beans3.xml"/>
+</beans>
+```
+
