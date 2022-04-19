@@ -322,3 +322,240 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 </beans>
 ```
 
+## 6. 依赖注入
+
+### 构造器注入
+
+前面说过
+
+### set方式注入
+
+- 依赖注入：Set注入
+
+  - 依赖：bean对象的创建依赖于容器
+
+  - 注入：bean对象中的所有属性，由容器来注入
+
+【环境搭建】
+
+1. 复杂类型
+
+   ```JAVA
+   package com.kuang.pojo;
+   
+   public class Address {
+       private String address;
+   
+       public String getAddress() {
+           return address;
+       }
+   
+       public void setAddress(String address) {
+           this.address = address;
+       }
+   }
+   ```
+
+2. 真实测试对象
+
+   ```java
+   package com.kuang.pojo;
+   
+   import java.util.*;
+   
+   public class Student {
+       private String name;
+       private Address address;
+       private String[] books;
+       private List<String> hobbys;
+       private Map<String,String> card;
+       private Set<String> games;
+       private String wife;
+       private Properties info;
+   
+       public String getName() {
+           return name;
+       }
+   
+       public void setName(String name) {
+           this.name = name;
+       }
+   
+       public Address getAddress() {
+           return address;
+       }
+   
+       public void setAddress(Address address) {
+           this.address = address;
+       }
+   
+       public String[] getBooks() {
+           return books;
+       }
+   
+       public void setBooks(String[] books) {
+           this.books = books;
+       }
+   
+       public List<String> getHobbys() {
+           return hobbys;
+       }
+   
+       public void setHobbys(List<String> hobbys) {
+           this.hobbys = hobbys;
+       }
+   
+       public Map<String, String> getCard() {
+           return card;
+       }
+   
+       public void setCard(Map<String, String> card) {
+           this.card = card;
+       }
+   
+       public Set<String> getGames() {
+           return games;
+       }
+   
+       public void setGames(Set<String> games) {
+           this.games = games;
+       }
+   
+       public String getWife() {
+           return wife;
+       }
+   
+       public void setWife(String wife) {
+           this.wife = wife;
+       }
+   
+       public Properties getInfo() {
+           return info;
+       }
+   
+       public void setInfo(Properties info) {
+           this.info = info;
+       }
+   
+       @Override
+       public String toString() {
+           return "Student{" +
+                   "name='" + name + '\'' +
+                   ", address=" + address +
+                   ", books=" + Arrays.toString(books) +
+                   ", hobbys=" + hobbys +
+                   ", card=" + card +
+                   ", games=" + games +
+                   ", wife='" + wife + '\'' +
+                   ", info=" + info +
+                   '}';
+       }
+   }
+   ```
+
+3. beans.xml
+
+   ```XML
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.springframework.org/schema/beans
+           https://www.springframework.org/schema/beans/spring-beans.xsd">
+   <bean id="student" class="com.kuang.pojo.Student">
+       <!--第一种，普通注入，value-->
+       <property name="name" value="狂神"/>
+   </bean>
+   </beans>
+   ```
+
+4. 测试类
+
+   ```JAVA
+   package com.kuang;
+   
+   import com.kuang.pojo.Student;
+   import org.springframework.context.ApplicationContext;
+   import org.springframework.context.support.ClassPathXmlApplicationContext;
+   
+   public class MyTest {
+       public static void main(String[] args) {
+           ApplicationContext context = new ClassPathXmlApplicationContext("beans.xml");
+           Student student = (Student) context.getBean("student");
+           System.out.println(student.getName());
+       }
+   }
+   ```
+
+完善注入信息
+
+```XML
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="address" class="com.kuang.pojo.Address">
+        <property name="address" value="杭州"></property>
+    </bean>
+<bean id="student" class="com.kuang.pojo.Student">
+    <!--第一种，普通注入，value-->
+    <property name="name" value="狂神"/>
+
+    <!--第二种，Bean注入，ref-->
+    <property name="address" ref="address"/>
+
+    <!--数组注入,ref-->
+    <property name="books">
+        <array>
+            <value>红楼梦</value>
+            <value>西游记</value>
+            <value>水浒传</value>
+            <value>三国演义</value>
+        </array>
+    </property>
+
+    <!--List-->
+    <property name="hobbys">
+        <list>
+            <value>听歌</value>
+            <value>敲代码</value>
+            <value>看电影</value>
+        </list>
+    </property>
+
+    <!--Map-->
+    <property name="card">
+        <map>
+            <entry key="身份证" value="111222333344445555"/>
+            <entry key="银行卡" value="11123123123123123123"/>
+        </map>
+    </property>
+    <!--Set-->
+    <property name="games">
+        <set>
+            <value>LOL</value>
+            <value>COC</value>
+            <value>BOB</value>
+        </set>
+    </property>
+
+    <!--null-->
+    <property name="wife">
+        <null/>
+    </property>
+
+    <!--Properties-->
+    <property name="info">
+        <props>
+            <prop key="driver">171030338</prop>
+            <prop key="url">171030338</prop>
+            <prop key="username">171030338</prop>
+            <prop key="password">171030338</prop>
+        </props>
+    </property>
+</bean>
+</beans>
+```
+
+### 拓展方式注入
