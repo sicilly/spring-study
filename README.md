@@ -328,7 +328,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
 前面说过
 
-### set方式注入
+### set方式注入（重点）
 
 - 依赖注入：Set注入
 
@@ -559,3 +559,42 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 ```
 
 ### 拓展方式注入
+我们可以使用p命名空间和c命名空间进行注入
+
+xml：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!--p命名空间注入，可以直接注入属性的值：property-->
+    <bean id="user" class="com.kuang.pojo.User" p:name="狂神" p:age="18"/>
+
+    <!--c命名空间注入，通过构造器注入：construct-args-->
+    <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神"/>
+</beans>
+```
+
+测试：
+
+```JAVA
+@Test
+public void test2() {
+    ApplicationContext context = new ClassPathXmlApplicationContext("userbeans.xml");
+    User user = (User) context.getBean("user2");
+    System.out.println(user);
+}
+```
+
+
+
+注意点：p命名空间和c命名空间不能直接使用，需要导入xml约束！
+
+```xml
+xmlns:p="http://www.springframework.org/schema/p"
+xmlns:c="http://www.springframework.org/schema/c"
+```
