@@ -599,14 +599,14 @@ xmlns:p="http://www.springframework.org/schema/p"
 xmlns:c="http://www.springframework.org/schema/c"
 ```
 
-## 7. bean的作用域
+### bean的作用域
 
 ![image-20191206184244344](https://github.com/Always18YearsOld/study-spring/raw/master/Spring%E7%AC%94%E8%AE%B0/image-20191206184244344.png)
 
 1. 单例模式（Spring默认机制）
 
    ```xml
-       <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神" scope="singleton"/>
+   <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神" scope="singleton"/>
    ```
 
    ```java
@@ -624,7 +624,7 @@ xmlns:c="http://www.springframework.org/schema/c"
 2. 原型模式:每次从容器中get的时候，都会产生一个新对象
 
    ```xml
-       <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神" scope="prototype"/>
+   <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神" scope="prototype"/>
    
    ```
 
@@ -633,3 +633,49 @@ xmlns:c="http://www.springframework.org/schema/c"
    > false
 
 3. 其余的request、session、application、这些只能在web开发中用到！
+
+# 7、bean的自动装配
+
+- 自动装配是Spring满足bean依赖的一种方式！
+- Spring会在上下文中自动寻找，并自动给bean装配属性！
+
+在Spring中有三种装配的方式
+
+1. 在xml中显示的配置
+2. 在java中显示配置
+3. 隐式的自动装配bean【重要】
+
+## 自动装配
+
+1. 环境搭建
+   - 一个人有两个宠物！
+
+## ByName自动装配
+
+```xml
+<!--
+byName：会自动在容器上下文中查找，和自己对象set方法后面的值对应的beanid！
+-->
+<bean id="people" class="com.kuang.pojo.People" autowire="byName">
+    <property name="name" value="狂神"/>
+</bean>
+```
+
+## ByType自动装配
+
+```xml
+<bean id="cat" class="com.kuang.pojo.Cat"/>
+<bean id="dog" class="com.kuang.pojo.Dog"/>
+<!--
+    byName：会自动在容器上下文中查找，和自己对象set方法后面的值对应的beanid！
+    byType：会自动在容器上下文中查找，和自己对象属性类型相同的bean！
+    -->
+<bean id="people" class="com.kuang.pojo.People" autowire="byType">
+    <property name="name" value="狂神"/>
+</bean>
+```
+
+小结：
+
+- byname的时候，需要保证所有bean的id唯一，并且这个bean需要和注入的属性的set方法的值一致
+- bytype的时候，需要保证所有bean的class唯一，并且这个bean需要和注入的属性的类型一致

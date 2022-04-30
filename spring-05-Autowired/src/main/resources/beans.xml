@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="cat" class="com.sicilly.pojo.Cat"/>
+    <bean id="dog" class="com.sicilly.pojo.Dog"/>
+<!--    byName:会自动在容器上下文中查找-->
+    <bean id="people" class="com.sicilly.pojo.People" autowire="byName">
+        <property name="name" value="小李子"/>
+
+    </bean>
+</beans>
