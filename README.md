@@ -598,3 +598,38 @@ public void test2() {
 xmlns:p="http://www.springframework.org/schema/p"
 xmlns:c="http://www.springframework.org/schema/c"
 ```
+
+## 7. bean的作用域
+
+![image-20191206184244344](https://github.com/Always18YearsOld/study-spring/raw/master/Spring%E7%AC%94%E8%AE%B0/image-20191206184244344.png)
+
+1. 单例模式（Spring默认机制）
+
+   ```xml
+       <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神" scope="singleton"/>
+   ```
+
+   ```java
+   User user1 = context.getBean("user2", User.class);
+   User user2 = context.getBean("user2", User.class);
+   System.out.println(user1.hashCode());
+   System.out.println(user2.hashCode());
+   System.out.println(user1==user2);
+   ```
+
+   > 1020154737
+   > 1020154737
+   > true
+
+2. 原型模式:每次从容器中get的时候，都会产生一个新对象
+
+   ```xml
+       <bean id="user2" class="com.kuang.pojo.User" c:age="18" c:name="狂神" scope="prototype"/>
+   
+   ```
+
+   > 1020154737
+   > 398457879
+   > false
+
+3. 其余的request、session、application、这些只能在web开发中用到！

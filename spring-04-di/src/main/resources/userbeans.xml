@@ -10,7 +10,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
     <bean id="user" class="com.sicilly.pojo.User" p:name="小红" p:age="18"></bean>
 
 <!--c命名空间注入，通过构造器注入 constructor-->
-    <bean id="user2" class="com.sicilly.pojo.User" c:age="20" c:name="小明">
+    <bean id="user2" class="com.sicilly.pojo.User" c:age="20" c:name="小明" scope="prototype">
 
     </bean>
 </beans>
