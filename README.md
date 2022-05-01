@@ -645,12 +645,12 @@ xmlns:c="http://www.springframework.org/schema/c"
 2. 在java中显示配置
 3. 隐式的自动装配bean【重要】
 
-## 自动装配
+### 自动装配
 
 1. 环境搭建
    - 一个人有两个宠物！
 
-## ByName自动装配
+### ByName自动装配
 
 ```xml
 <!--
@@ -661,7 +661,7 @@ byName：会自动在容器上下文中查找，和自己对象set方法后面�
 </bean>
 ```
 
-## ByType自动装配
+### ByType自动装配
 
 ```xml
 <bean id="cat" class="com.kuang.pojo.Cat"/>
@@ -680,7 +680,7 @@ byName：会自动在容器上下文中查找，和自己对象set方法后面�
 - byname的时候，需要保证所有bean的id唯一，并且这个bean需要和注入的属性的set方法的值一致
 - bytype的时候，需要保证所有bean的class唯一，并且这个bean需要和注入的属性的类型一致
 
-## 使用注解实现自动装配
+### 使用注解实现自动装配
 
 jdk1.5支持的注解，Spring2.5就支持注解了！
 
@@ -759,3 +759,86 @@ private Dog dog;
 - @Autowired通过byType的方式实现，而且必须要求这个对象存在！【常用】
 - @Resource默认通过byname的方式实现，如果找不到名字，则通过byType实现！如果两个都找不到的情况下，就报错！
   - 执行顺序不同：@Autowired通过byType的方式实现 @Resource默认通过byname的方式实现
+
+## 8、使用注解开发
+
+在Spring4之后，要使用注解开发，必须要保证AOP包已经导入了
+
+[![image-20191209152153995](https://github.com/Always18YearsOld/study-spring/raw/master/Spring%E7%AC%94%E8%AE%B0/image-20191209152153995.png)](https://github.com/Always18YearsOld/study-spring/blob/master/Spring笔记/image-20191209152153995.png)
+
+使用注解需要导入context约束，增加注解的支持!
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--开启注解的支持-->
+    <context:annotation-config/>
+
+
+
+</beans>
+```
+
+1. bean
+
+2. 属性如何注入
+
+   ```java
+   @Component
+   public class User {
+       //相当于 <property name="name" value="狂神"></property>
+   
+       @Value("狂神")
+       public String name;
+   ```
+
+3. 衍生的注解 @Component有几个衍生注解，我们在web开发中，会按照mvc三层架构分层！
+
+   - dao 【@Repository】
+   - service 【@Service】
+   - controller 【@Controller】 这四个注解功能都是一样的，都是代表将某个类注册到Spring中，装配Bean
+
+4. 自动装配
+
+   ```
+   @Autowired:自动装配通过类型、名字
+   如果Autowired不能唯一自动装配上属性，则需要通过@Qualifier(value="xxx")
+   @Nullable：字段标记了这个注解，说明这个字段可以为null
+   @Resource：自动装配通过名字、类型
+   @Component：自动装配通过名字、类型
+   ```
+
+5. 作用域
+
+   ```java
+   @Component
+   @Scope("prototype")
+   public class User {
+       //相当于 <property name="name" value="狂神"></property>
+   
+       @Value("狂神")
+       public String name;
+   }
+   ```
+
+   
+
+6. 小结 xml与注解：
+
+   - xml更加万能，适用于任何场合！维护简单方便
+   - 注解 不是自己类使用不了，维护相对复杂！
+
+   xml与注解最佳实践
+
+   - xml用来管理bean
+   - 注解只负责完成属性的注入
+   - 我们在使用的过程中，只需要注意一个问题：必须让注解生效，就需要开启注解的支持
