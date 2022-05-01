@@ -634,7 +634,7 @@ xmlns:c="http://www.springframework.org/schema/c"
 
 3. 其余的request、session、application、这些只能在web开发中用到！
 
-## 7、bean的自动装配
+## 7. bean的自动装配
 
 - 自动装配是Spring满足bean依赖的一种方式！
 - Spring会在上下文中自动寻找，并自动给bean装配属性！
@@ -760,7 +760,7 @@ private Dog dog;
 - @Resource默认通过byname的方式实现，如果找不到名字，则通过byType实现！如果两个都找不到的情况下，就报错！
   - 执行顺序不同：@Autowired通过byType的方式实现 @Resource默认通过byname的方式实现
 
-## 8、使用注解开发
+## 8. 使用注解开发
 
 在Spring4之后，要使用注解开发，必须要保证AOP包已经导入了
 
@@ -849,7 +849,7 @@ private Dog dog;
 <context:annotation-config/>
 ```
 
-## 9、使用Java的方式配置Spring
+## 9. 使用Java的方式配置Spring
 
 (注：这一节可能会有一些问题，实际测试只需要@Bean这个注解就可以正常运行，其他几个注解不需要。先放在这后面再看。)
 
@@ -924,3 +924,215 @@ public class MyTest {
 ```
 
 这种纯Java的配置方式，在SpringBoot中随处可见！
+
+## 10. 代理模式
+
+为什么要学习代理模式？因为这就是SpringAOP的底层【SpringAOP和SpringMVC】
+
+代理模式的分类：
+
+- 静态代理
+- 动态代理
+
+### 静态代理
+
+角色分析：
+
+- 抽象角色：一般会使用接口或者抽象类来解决
+- 真实角色：被代理的角色
+- 代理角色：代理真实角色，代理真实角色后，我们一般会做一些附属操作
+- 客户：访问代理对象的人！
+
+代码步骤：
+
+1. 接口
+
+   ```java
+   //租房接口
+   public interface Rent {
+       public void rent();
+   }
+   ```
+
+2. 真实角色
+
+   ```java
+   //房东
+   public class Host implements Rent {
+       @Override
+       public void rent(){
+           System.out.println("房东要出租房子！🏠");
+       }
+   }
+   ```
+
+3. 代理角色
+
+   ```java
+   package com.kuang.demo01;
+   
+   public class Proxy implements Rent {
+       private Host host;
+   
+       public Proxy() {
+       }
+   
+       public Proxy(Host host) {
+           this.host = host;
+       }
+   
+       @Override
+       public void rent() {
+           seeHouse();
+           host.rent();
+           hetong();
+           fare();
+       }
+       //看房
+       public void seeHouse(){
+           System.out.println("中介带你看房");
+       }
+   
+       //签署合同
+       public void hetong(){
+           System.out.println("签租赁合同");
+       }
+   
+       //收取中介费
+       public void fare(){
+           System.out.println("收取中介费");
+       }
+   }
+   ```
+
+4. 客户端访问代理角色
+
+   ```java
+   package com.kuang.demo01;
+   
+   public class Client {
+       public static void main(String[] args) {
+           //房东要租房子
+           Host host = new Host();
+           //代理，中介帮房东租房子，但是呢代理角色一般会有一些附属操作！
+           Proxy proxy = new Proxy(host);
+           //你不用面对房东，直接找中介租房即可！
+           proxy.rent();
+       }
+   }
+   ```
+
+代理模式的好处：
+
+- 可以使真实角色的操作更加纯粹！不用关注一些公共的业务
+- 公共事情就交给代理角色！实现了业务的分工
+- 公共业务发生扩展的时候，方便集中管理
+
+缺点：
+
+- 一个真实角色就会产生一个代理角色；代码量会翻倍～开发效率会变低
+
+### 加深理解
+
+代码：对应08-demo02
+
+UserService.java  接口
+
+```java
+package com.sicilly.demo02;
+
+public interface UserService {
+    public void add();
+    public void delete();
+    public void update();
+    public void query();
+}
+```
+
+UserServiceImpl.java  真实对象
+
+```java
+package com.sicilly.demo02;
+
+// 真实对象
+public class UserServiceImpl implements UserService{
+    @Override
+    public void add() {
+        System.out.println("增加用户");
+    }
+    @Override
+    public void delete() {
+        System.out.println("删除用户");
+    }
+    @Override
+    public void update() {
+        System.out.println("修改用户");
+    }
+    @Override
+    public void query() {
+        System.out.println("查询用户");
+    }
+}
+```
+
+现在想要加一些功能，为了不改变原有的代码，可以加一个代理
+
+UserServiceProxy.java  代理
+
+```java
+package com.sicilly.demo02;
+
+public class UserServiceProxy implements UserService{
+
+    private UserServiceImpl userService;
+	// set方法，把真实对象userService注入进去
+    public void setUserService(UserServiceImpl userService) {
+        this.userService = userService;
+    }
+
+    @Override
+    public void add() {
+        log("add");         // 可以加功能
+        userService.add();  // 还是真实对象来执行
+    }
+    @Override
+    public void delete() {
+        log("delete");
+        userService.delete();
+    }
+    @Override
+    public void update() {
+        log("update");
+        userService.update();
+    }
+    @Override
+    public void query() {
+        log("query");
+        userService.query();
+    }
+    // 日志方法
+    public void log(String msg){
+        System.out.println("使用了"+msg+"方法");
+    }
+}
+```
+
+Client.java
+
+```java
+package com.sicilly.demo02;
+
+
+public class Client {
+    public static void main(String[] args) {
+        UserServiceImpl userService = new UserServiceImpl(); // new一个真实对象
+        UserServiceProxy proxy=new UserServiceProxy(); // new一个代理对象
+        proxy.setUserService(userService); // 真实对象userService传进代理对象中
+        proxy.query(); // 代理来执行查询方法
+    }
+}
+```
+
+聊聊AOP
+
+[![image-20191210134209304](https://github.com/Always18YearsOld/study-spring/raw/master/Spring%E7%AC%94%E8%AE%B0/image-20191210134209304.png)](https://github.com/Always18YearsOld/study-spring/blob/master/Spring笔记/image-20191210134209304.png)
