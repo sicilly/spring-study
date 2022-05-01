@@ -634,7 +634,7 @@ xmlns:c="http://www.springframework.org/schema/c"
 
 3. 其余的request、session、application、这些只能在web开发中用到！
 
-# 7、bean的自动装配
+## 7、bean的自动装配
 
 - 自动装配是Spring满足bean依赖的一种方式！
 - Spring会在上下文中自动寻找，并自动给bean装配属性！
@@ -679,3 +679,83 @@ byName：会自动在容器上下文中查找，和自己对象set方法后面�
 
 - byname的时候，需要保证所有bean的id唯一，并且这个bean需要和注入的属性的set方法的值一致
 - bytype的时候，需要保证所有bean的class唯一，并且这个bean需要和注入的属性的类型一致
+
+## 使用注解实现自动装配
+
+jdk1.5支持的注解，Spring2.5就支持注解了！
+
+要使用注解须知：
+
+1. 导入约束 context约束
+
+2. **配置注解的支持： \<context:annotation-config/\>**
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           https://www.springframework.org/schema/context/spring-context.xsd">
+   
+       <context:annotation-config/>
+   
+   </beans>
+   ```
+
+**@Autowired**
+
+直接在属性上用即可！也可以在set方式上使用！
+
+使用Autowired我们可以不用使用Set方法了，前提是你这个自动装配的属性在IOC（Spring）容器中存在且符合名字
+
+
+
+**@Autowired注解**
+
+如果@Autowired自动装配的环境比较复杂，自动装配无法通过一个注解【@Autowired】完成的时候、我们可以使用@Qualifier(value = "xxx")去配合@Autowired的使用，指定一个唯一的bean对象注入
+
+```java
+public class People {
+    @Autowired
+    @Qualifier(value = "cat2")
+    private Cat cat;
+    
+    @Autowired
+    @Qualifier(value = "dog1")
+    private Dog dog;
+    private String name;
+}
+```
+
+```xml
+<bean id="cat1" class="com.sicilly.pojo.Cat"/>
+<bean id="cat2" class="com.sicilly.pojo.Cat"/>
+<bean id="cat3" class="com.sicilly.pojo.Cat"/>
+<bean id="dog1" class="com.sicilly.pojo.Dog"/>
+<bean id="dog2" class="com.sicilly.pojo.Dog"/>
+<bean id="dog3" class="com.sicilly.pojo.Dog"/>
+<bean id="people" class="com.sicilly.pojo.People"/>
+```
+
+**@Resource注解**
+
+```
+public class people{
+@Resource(name="cat")
+private Cat cat;
+@Resource
+private Dog dog;
+}
+```
+
+**小结**
+
+@Resource和@Autowired的区别：
+
+- 都是用来自动装配的，都可以放在属性字段上
+- @Autowired通过byType的方式实现，而且必须要求这个对象存在！【常用】
+- @Resource默认通过byname的方式实现，如果找不到名字，则通过byType实现！如果两个都找不到的情况下，就报错！
+  - 执行顺序不同：@Autowired通过byType的方式实现 @Resource默认通过byname的方式实现
