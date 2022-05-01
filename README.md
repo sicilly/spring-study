@@ -1034,7 +1034,7 @@ public class MyTest {
 
 ### 加深理解
 
-代码：对应08-demo02
+#### 08-demo2
 
 UserService.java  接口
 
@@ -1136,3 +1136,220 @@ public class Client {
 聊聊AOP
 
 [![image-20191210134209304](https://github.com/Always18YearsOld/study-spring/raw/master/Spring%E7%AC%94%E8%AE%B0/image-20191210134209304.png)](https://github.com/Always18YearsOld/study-spring/blob/master/Spring笔记/image-20191210134209304.png)
+
+### 动态代理
+
+- 动态代理和静态代理角色一样
+- 动态代理的代理类是动态生成的，不是我们直接写好的！
+- 动态代理也分为两大类：基于接口的动态代理，基于类的动态代理
+  - 基于接口----JDK动态代理
+  - 基于类：cglib
+  - java字节码实现：javasist
+
+需要了解两个类：
+
+Proxy（代理）——生成动态代理这个实例
+
+InvocationHandler（调用处理程序）——调用处理程序并返回结果
+
+#### 08-demo3
+
+Rent 租房接口
+
+```java
+package com.sicilly.demo3;
+
+// 租房
+public interface Rent {
+    public void rent();
+}
+```
+
+Landlord.java 房东
+
+```java
+package com.sicilly.demo3;
+
+// 房东
+public class Landlord implements Rent {
+
+    public void rent() {
+        System.out.println("房东要出租房子");
+    }
+}
+
+```
+
+ProxyInvocationHandler.java 调用处理程序
+
+```java
+package com.sicilly.demo3;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+// 等会我们会用这个类，自动生成代理类
+public class ProxyInvocationHandler implements InvocationHandler {
+    // 被代理的接口
+    private Rent rent;
+
+    public void setRent(Rent rent) {
+        this.rent = rent;
+    }
+    // 生成得到代理类
+    public Object getProxy(){
+        return Proxy.newProxyInstance(this.getClass().getClassLoader(), rent.getClass().getInterfaces(),this);
+    }
+    // 处理代理实例，并返回结果
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // 动态代理的本质，就是使用反射机制实现
+        seeHouse();
+        Object result = method.invoke(rent, args);
+        fare();
+        return result;
+    }
+    public void seeHouse(){
+        System.out.println("中介带看房子");
+    }
+    public void fare(){
+        System.out.println("收中介费");
+    }
+}
+
+```
+
+Client.java
+
+```java
+package com.sicilly.demo3;
+
+import com.sicilly.demo01.Proxy;
+
+public class Client {
+    public static void main(String[] args) {
+        // 真实角色
+        Landlord landlord=new Landlord();
+        // 代理角色：现在没有
+        ProxyInvocationHandler pih=new ProxyInvocationHandler(); // 调用处理程序角色
+        // 通过调用处理程序角色来处理我们要调用的接口对象
+        pih.setRent(landlord);  // 设置要代理的角色
+        Rent proxy = (Rent)pih.getProxy(); // 获得代理类 这里的proxy就是动态生成的
+        proxy.rent(); // 通过代理来出租房子
+    }
+}
+```
+
+#### 08-demo4 
+
+写成更通用的，当作工具类来用
+
+UserService 接口
+
+```java
+package com.sicilly.demo02;
+
+public interface UserService {
+    public void add();
+    public void delete();
+    public void update();
+    public void query();
+}
+
+```
+
+UserServiceImpl 实现类
+
+```java
+package com.sicilly.demo02;
+
+// 真实对象
+public class UserServiceImpl implements UserService{
+
+    @Override
+    public void add() {
+        System.out.println("增加用户");
+    }
+
+    @Override
+    public void delete() {
+        System.out.println("删除用户");
+    }
+
+    @Override
+    public void update() {
+        System.out.println("修改用户");
+    }
+
+    @Override
+    public void query() {
+        System.out.println("查询用户");
+    }
+}
+```
+
+ProxyInvocationHandler.java
+
+```java
+package com.sicilly.demo4;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+// 等会我们会用这个类，自动生成代理类
+public class ProxyInvocationHandler implements InvocationHandler {
+    // 被代理的接口
+    private Object target;
+
+    public void setTarget(Object target) {
+        this.target = target;
+    }
+
+    // 把target传进去生成得到代理类
+    public Object getProxy(){
+        return Proxy.newProxyInstance(this.getClass().getClassLoader(), target.getClass().getInterfaces(),this);
+    }
+    // 处理代理实例，并返回结果
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        log(method.getName());  // 通过反射得到方法名
+        Object result = method.invoke(target, args);
+        return result;
+    }
+    // 加入其他方法
+    public void log(String msg){
+        System.out.println("执行了"+msg+"方法");
+    }
+}
+```
+
+Client.java
+
+```java
+package com.sicilly.demo4;
+
+import com.sicilly.demo02.UserService;
+import com.sicilly.demo02.UserServiceImpl;
+
+public class Client {
+    public static void main(String[] args) {
+        // 真实角色
+        UserServiceImpl userService = new UserServiceImpl();
+        // 代理角色：现在没有
+        ProxyInvocationHandler pih=new ProxyInvocationHandler(); // new一个调用程序处理角色
+        // 通过调用程序处理角色来处理我们要调用的接口对象
+        pih.setTarget(userService);  // 设置要代理的真实角色
+        UserService proxy = (UserService)pih.getProxy(); // 动态生成代理类
+        proxy.add(); // 通过代理来调用方法
+    }
+}
+
+```
+
+动态代理的好处：
+
+- 可以使真实角色的操作更加纯粹！不用关注一些公共的业务
+- 公共事情就交给代理角色！实现了业务的分工
+- 公共业务发生扩展的时候，方便集中管理
+- 一个动态代理类代理的是一个接口，一般就是对应的一类业务
+- 一个动态代理类可以代理多个类，只要是实现了同一个接口即可
