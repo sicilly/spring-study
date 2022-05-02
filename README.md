@@ -1524,3 +1524,59 @@ public class MyTest {
 
 
 #### 方式二：自定义类来实现AOP【主要是切面的定义】
+
+UserService和UserServiceImpl不变
+
+新建一个DiyPointCut
+
+```java
+package com.sicilly.diy;
+
+public class DiyPointCut {
+    public void before(){
+        System.out.println("方法执行前");
+    }
+    public void after(){
+        System.out.println("方法执行后");
+    }
+}
+
+```
+
+applicationContext.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+<!--    方式二：自定义类-->
+<!--    注册bean-->
+    <bean id="userService" class="com.sicilly.service.UserServiceImpl"/>
+    <bean id="diy" class="com.sicilly.diy.DiyPointCut"/>
+    <aop:config>
+<!--    自定义切面，ref要引用的类-->
+        <aop:aspect ref="diy">
+            <!--切入点-->
+            <aop:pointcut id="point" expression="execution(* com.sicilly.service.UserServiceImpl.*(..))"/>
+            <!--通知-->
+            <aop:before method="before" pointcut-ref="point"/>
+            <aop:after method="after" pointcut-ref="point"/>
+
+        </aop:aspect>
+    </aop:config>
+
+</beans>
+```
+
+执行结果：
+
+> 方法执行前
+> 新增
+> 方法执行后
+
