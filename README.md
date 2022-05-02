@@ -1353,3 +1353,174 @@ public class Client {
 - 公共业务发生扩展的时候，方便集中管理
 - 一个动态代理类代理的是一个接口，一般就是对应的一类业务
 - 一个动态代理类可以代理多个类，只要是实现了同一个接口即可
+
+## 11、AOP
+
+### 什么是AOP
+
+AOP意为：面向切面编程，通过预编译方式和运行期动态代理实现程序功能的统一维护的一种技术。AOP是OOP的延续，是软件开发中的一个热点，也是Spring框架中的一个重要内容，是函数式编程的一种衍生范型。利用AOP可以对业务逻辑的各个部分进行隔离，从而使得业务逻辑部分之间的耦合度降低，提高程序的可重用性，同时提高了开发的效率。
+
+[![image-20191210172248020](https://github.com/Always18YearsOld/study-spring/raw/master/Spring%E7%AC%94%E8%AE%B0/image-20191210172248020.png)](https://github.com/Always18YearsOld/study-spring/blob/master/Spring笔记/image-20191210172248020.png)
+
+### AOP在Spring中的作用
+
+**提供声明式事务，允许用户自定义切面**
+
+- 横切关注点：跨越应用程序多个模块的方法或功能。即是，与我们业务逻辑无关的，但是我们需要关注的部分，就是横切关注点。如日志，安全，缓存，事务等等....
+- 切面（ASPECT）：横切关注点被模块化的特殊对象。即，它是一个类。
+- 通知（Advice）：切面必须要完成的工作。即，它是类中的一个方法。
+- 目标（Target）：被通知对象。
+- 代理（Proxy）：向目标对象应用通知之后创建的对象。
+- 切入点（PointCut）：切面通知执行的“地点“的定义
+- 连接点（JointPoint）：与切入点匹配的执行点
+
+### 使用Spring实现AOP
+
+【重点】使用AOP织入，需要导入一个依赖包！
+
+```xml
+<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjweaver</artifactId>
+    <version>1.9.4</version>
+</dependency>
+```
+
+#### 方式一：使用Spring的API接口【主要SpringAPI接口实现】
+
+UserService 接口
+
+```java
+package com.sicilly.service;
+
+public interface UserService {
+    public void add();
+    public void delete();
+    public void update();
+    public void select();
+}
+```
+
+UserServiceImpl  实现了接口
+
+```java
+package com.sicilly.service;
+
+public class UserServiceImpl implements UserService{
+
+    @Override
+    public void add() {
+        System.out.println("新增");
+    }
+    @Override
+    public void delete() {
+        System.out.println("删除");
+    }
+    @Override
+    public void update() {
+        System.out.println("修改");
+    }
+    @Override
+    public void select() {
+        System.out.println("查询");
+    }
+}
+```
+
+现在想要在执行以上方法前输出一些日志，只需要实现对应的接口 Log.java
+
+```java
+package com.sicilly.log;
+
+import org.springframework.aop.MethodBeforeAdvice;
+
+import java.lang.reflect.Method;
+
+public class Log implements MethodBeforeAdvice {
+    // method: 要执行的目标对象的方法
+    // args：参数
+    // target：目标对象
+    public void before(Method method, Object[] args, Object target) throws Throwable {
+        System.out.println(target.getClass().getName()+"的"+method.getName()+"被执行了");
+    }
+}
+
+```
+
+想要在执行方法后再输出一些日志，也是实现对应的接口 AfterLog.java
+
+```java
+package com.sicilly.log;
+
+import org.springframework.aop.AfterReturningAdvice;
+
+import java.lang.reflect.Method;
+
+public class AfterLog implements AfterReturningAdvice {
+
+    // returnValue 返回值
+    public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
+        System.out.println("执行了"+method.getName()+"方法，返回结果为："+returnValue);
+    }
+}
+
+```
+
+然后要把这些方法注册到spring中 applicationContext.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 注册bean-->
+    <bean id="userService" class="com.sicilly.service.UserServiceImpl"/>
+    <bean id="log" class="com.sicilly.log.Log"/>
+    <bean id="afterlog" class="com.sicilly.log.AfterLog"/>
+
+    <!-- 方式一:使用原生Spring API接口 -->
+    <!--配置aop:需要导入aop的约束-->
+    <aop:config>
+        <!--切入点: expression:表达式，execution(修饰词 返回值 列名 方法名 参数)-->
+        <aop:pointcut id="pointcut" expression="execution(* com.sicilly.service.UserServiceImpl.*(..))"/>
+        <!--执行环绕增加！-->
+        <aop:advisor advice-ref="log" pointcut-ref="pointcut"/>
+        <aop:advisor advice-ref="afterlog" pointcut-ref="pointcut"/>
+    </aop:config>
+
+</beans>
+```
+
+MyTest
+
+```JAVA
+import com.sicilly.service.UserService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class MyTest {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        // 注意：动态代理 代理的是接口
+        UserService userService = context.getBean("userService", UserService.class);
+        userService.add();
+    }
+}
+
+```
+
+运行结果：
+
+> com.sicilly.service.UserServiceImpl的add被执行了
+> 新增
+> 执行了add方法，返回结果为：null
+
+
+
+#### 方式二：自定义类来实现AOP【主要是切面的定义】
