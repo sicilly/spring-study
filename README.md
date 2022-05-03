@@ -1627,3 +1627,274 @@ public class AnnotationPointCut {
 > null
 > 环绕后
 > 方法执行后
+
+## 12. 整合Mybatis
+
+### 回顾Mybatis
+
+准备好mybatis数据库，user表中有三个字段 id、name、pwd
+
+搭建环境步骤：
+
+1. pom.xml导入相关jar包
+
+   - junit
+   - mybatis
+   - mysql数据库
+   - spring相关
+   - aop织入
+   - mybatis-spring【new】
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <parent>
+           <artifactId>spring-study</artifactId>
+           <groupId>com.sicilly</groupId>
+           <version>1.0-SNAPSHOT</version>
+       </parent>
+       <modelVersion>4.0.0</modelVersion>
+   
+       <artifactId>spring-10-mybatis</artifactId>
+   
+       <properties>
+           <maven.compiler.source>11</maven.compiler.source>
+           <maven.compiler.target>11</maven.compiler.target>
+       </properties>
+   
+       <dependencies>
+           <dependency>
+               <groupId>junit</groupId>
+               <artifactId>junit</artifactId>
+               <version>4.13</version>
+           </dependency>
+           <dependency>
+               <groupId>mysql</groupId>
+               <artifactId>mysql-connector-java</artifactId>
+               <version>5.1.47</version>
+           </dependency>
+           <dependency>
+               <groupId>org.mybatis</groupId>
+               <artifactId>mybatis</artifactId>
+               <version>3.5.5</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-webmvc</artifactId>
+               <version>5.2.7.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.springframework</groupId>
+               <artifactId>spring-jdbc</artifactId>
+               <version>5.2.7.RELEASE</version>
+           </dependency>
+           <dependency>
+               <groupId>org.aspectj</groupId>
+               <artifactId>aspectjweaver</artifactId>
+               <version>1.9.5</version>
+           </dependency>
+           <dependency>
+               <groupId>org.mybatis</groupId>
+               <artifactId>mybatis-spring</artifactId>
+               <version>2.0.5</version>
+           </dependency>
+           <dependency>
+               <groupId>org.projectlombok</groupId>
+               <artifactId>lombok</artifactId>
+               <version>RELEASE</version>
+               <scope>compile</scope>
+           </dependency>
+       </dependencies>
+       <build>
+           <resources>
+               <resource>
+                   <directory>src/main/resources</directory>
+                   <includes>
+                       <include>**/*.properties</include>
+                       <include>**/*.xml</include>
+                   </includes>
+               </resource>
+               <resource>
+                   <directory>src/main/java</directory>
+                   <includes>
+                       <include>**/*.properties</include>
+                       <include>**/*.xml</include>
+                   </includes>
+                   <filtering>true</filtering>
+               </resource>
+           </resources>
+       </build>
+   </project>
+   ```
+
+2. 实体类User
+
+   ```java
+   package com.sicilly.pojo;
+   
+   import lombok.Data;
+   
+   @Data
+   public class User {
+       private Integer id;
+       private String name;
+       private String pwd;
+   }
+   
+   ```
+
+3. 编写配置文件mybatis-config.xml和db.properties
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8" ?>
+   <!DOCTYPE configuration
+           PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-config.dtd">
+   
+   <configuration>
+   
+       <properties resource="db.properties"/>
+   
+       <typeAliases>
+           <package name="com.sicilly.pojo"></package>
+       </typeAliases>
+   
+       <environments default="development">
+           <environment id="development">
+               <transactionManager type="JDBC"/>
+               <dataSource type="POOLED">
+                   <property name="driver" value="${driver}"/>
+                   <property name="url" value="${url}"/>
+                   <property name="username" value="${username}"/>
+                   <property name="password" value="${password}"/>
+               </dataSource>
+           </environment>
+       </environments>
+   
+       <mappers>
+           <mapper resource="com/sicilly/mapper/UserMapper.xml"/>
+       </mappers>
+   
+   </configuration>
+   ```
+   
+   ```xml
+   driver=com.mysql.jdbc.Driver
+   url=jdbc:mysql://localhost:3306/mybatis?userSSL=true&useUnicode=true&characterEncoding=UTF-8
+   username=root
+   password=
+   ```
+   
+4. 接口UserMapper和对应的UserMapper.xml
+
+   ```java
+   package com.sicilly.mapper;
+   
+   import com.sicilly.pojo.User;
+   
+   import java.util.List;
+   
+   public interface UserMapper {
+       // 查询所有用户
+       List<User> selectAllUsers();
+   }
+   ```
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8" ?>
+   <!DOCTYPE mapper
+           PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+           "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   
+   <mapper namespace="com.sicilly.mapper.UserMapper">
+   
+       <select id="selectAllUsers" resultType="user">
+           select * from mybatis.user
+       </select>
+   </mapper>
+   ```
+
+5. 工具类MybatisUtils
+
+   ```java
+   package com.sicilly.utils;
+   
+   import org.apache.ibatis.io.Resources;
+   import org.apache.ibatis.session.SqlSession;
+   import org.apache.ibatis.session.SqlSessionFactory;
+   import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+   
+   import java.io.IOException;
+   import java.io.InputStream;
+   
+   public class MybatisUtils {
+       private static SqlSessionFactory sqlSessionFactory;
+   
+       static {
+           try {
+               //使用mybatis第一步：获取sqlSessionFactory对象
+               String resource = "mybatis-config.xml";
+               InputStream inputStream = Resources.getResourceAsStream(resource);
+               sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       }
+   
+       //既然有了 SqlSessionFactory，顾名思义，我们可以从中获得 SqlSession 的实例。SqlSession 提供了在数据库执行 SQL 命令所需的所有方法。
+       // 你可以通过 SqlSession 实例来直接执行已映射的 SQL 语句
+   
+       public static SqlSession getSqlSession(){
+           return sqlSessionFactory.openSession();
+       }
+   }
+   ```
+
+6. 测试MyTest
+
+   ```java
+   import com.sicilly.mapper.UserMapper;
+   import com.sicilly.pojo.User;
+   import com.sicilly.utils.MybatisUtils;
+   import org.apache.ibatis.session.SqlSession;
+   import org.junit.Test;
+   
+   import java.util.List;
+   
+   public class MyTest {
+       @Test
+       public void test(){
+           // 第一步：获得sqlSession对象
+           SqlSession sqlSession = MybatisUtils.getSqlSession();
+   
+           try {
+               // 方式一：getMapper
+               // 先获得userMapper接口里的对象
+               UserMapper userMapper=sqlSession.getMapper(UserMapper.class);
+               // 就可以执行对象里面的方法 查询所有用户
+               List<User> users=userMapper.selectAllUsers();
+               // 输出
+               for (User user : users) {
+                   System.out.println(user);
+               }
+           }finally {
+               // 关闭sqlSession
+               sqlSession.close();
+           }
+       }
+   }
+   
+   ```
+
+
+运行结果：
+
+> User(id=1, name=bobo, pwd=123456)
+> User(id=2, name=aaaa, pwd=bbbb)
+> User(id=3, name=李四, pwd=123456)
+> User(id=10, name=dd, pwd=123)
+
+### Mybatis-Spring
+
