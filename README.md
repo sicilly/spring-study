@@ -2002,7 +2002,46 @@ public class AnnotationPointCut {
    
    ```
 
-   
+### 整合Mybatis方式二
 
-   
+UserMapperImpl2继承了一个SqlSessionDaoSupport
+
+```java
+package com.sicilly.mapper;
+
+import com.sicilly.pojo.User;
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.support.SqlSessionDaoSupport;
+
+import java.util.List;
+
+public class UserMapperImpl2 extends SqlSessionDaoSupport implements UserMapper {
+
+    @Override
+    public List<User> selectAllUsers() {
+        SqlSession sqlSession = getSqlSession();
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        return mapper.selectAllUsers();
+    }
+}
+```
+
+注入到spring，applicationContext.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <import resource="spring-dao.xml"/>
+
+    <bean id="userMapper2" class="com.sicilly.mapper.UserMapperImpl2">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    </bean>
+</beans>
+```
 

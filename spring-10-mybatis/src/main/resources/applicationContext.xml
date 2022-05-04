@@ -11,5 +11,7 @@
     <bean id="userMapper" class="com.sicilly.mapper.UserMapperImpl">
         <property name="sqlSession" ref="sqlSession"/>
     </bean>
-
+    <bean id="userMapper2" class="com.sicilly.mapper.UserMapperImpl2">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    </bean>
 </beans>
