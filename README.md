@@ -1896,5 +1896,113 @@ public class AnnotationPointCut {
 > User(id=3, name=李四, pwd=123456)
 > User(id=10, name=dd, pwd=123)
 
-### Mybatis-Spring
+### 整合Mybatis方式一
+
+1.  编写数据源配置、sqlSessionFactory、sqlSessionTemplate
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:aop="http://www.springframework.org/schema/aop"
+          xsi:schemaLocation="http://www.springframework.org/schema/beans
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd">
+   
+   
+       <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+           <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+           <property name="url" value="jdbc:mysql://localhost:3306/mybatis?useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+           <property name="username" value="root"/>
+           <property name="password" value=""/>
+       </bean>
+   
+       <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+           <property name="dataSource" ref="dataSource" />
+           <property name="configLocation" value="classpath:mybatis-config.xml"/>
+           <property name="mapperLocations" value="classpath:com/sicilly/mapper/*.xml"/>
+       </bean>
+   
+       <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+           <constructor-arg index="0" ref="sqlSessionFactory"/>
+       </bean>
+   
+   
+   </beans>
+   ```
+
+2. 需要给接口加实现类
+
+   ```java
+   package com.sicilly.mapper;
+   
+   import com.sicilly.pojo.User;
+   
+   import org.mybatis.spring.SqlSessionTemplate;
+   
+   import java.util.List;
+   
+   public class UserMapperImpl implements UserMapper{
+   //  在原来，我们的所有操作都是用sqlSession来执行，现在我们都使用SqlSessionTemplate
+       private SqlSessionTemplate sqlSession;
+   
+       public void setSqlSession(SqlSessionTemplate sqlSession) {
+           this.sqlSession = sqlSession;
+       }
+   
+       public List<User> selectAllUsers() {
+           UserMapper mapper=sqlSession.getMapper(UserMapper.class);
+           return mapper.selectAllUsers();
+       }
+   }
+   ```
+
+3. 将自己写的实现类，注入到Spring中
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:aop="http://www.springframework.org/schema/aop"
+          xsi:schemaLocation="http://www.springframework.org/schema/beans
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd">
+       <import resource="spring-dao.xml"/>
+   
+       <bean id="userMapper" class="com.sicilly.mapper.UserMapperImpl">
+           <property name="sqlSession" ref="sqlSession"/>
+       </bean>
+   
+   </beans>
+   ```
+
+4. 测试
+
+   ```java
+   import com.sicilly.mapper.UserMapper;
+   import com.sicilly.pojo.User;
+   
+   import org.junit.Test;
+   import org.springframework.context.ApplicationContext;
+   import org.springframework.context.support.ClassPathXmlApplicationContext;
+   
+   
+   public class MyTest {
+       @Test
+       public void test(){
+           ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+           UserMapper userMapper = context.getBean("userMapper", UserMapper.class);
+           for (User user : userMapper.selectAllUsers()) {
+               System.out.println(user);
+           }
+       }
+   }
+   
+   ```
+
+   
+
+   
 
