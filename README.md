@@ -2072,3 +2072,62 @@ public class UserMapperImpl2 extends SqlSessionDaoSupport implements UserMapper 
 - 如果不配置事务，可能存在数据提交不一致的情况下；
 - 如果我们不在spring中去配置声明式事务，我们就需要在代码中手动配置事务！
 - 事务在项目的开发中十分重要，设计到数据的一致性和完整性问题，不容马虎！
+
+
+
+spring-dao.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--使用Spring的数据源替换mybatis的配置 我们这里使用Spring提供的jdbc-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/mybatis?useSSL=false&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+        <property name="username" value="root"/>
+        <property name="password" value=""/>
+    </bean>
+    <!--sqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <!--绑定Mybatis配置文件-->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath:com/sicilly/mapper/*.xml"/>
+    </bean>
+    <!--sqlSessionTemlate就是我们使用的sqlSession-->
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <!--只能使用构造器注入sqlSessionFactory 因为它没有set方法-->
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+    <!--配置声明式事务-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <constructor-arg name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--结合AOP实现事务的织入-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <!--给哪些方法配置事务-->
+        <tx:attributes>
+            <!--配置事务的传播特性 propagation-->
+            <tx:method name="*" propagation="REQUIRED"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--配置事务切入-->
+    <aop:config>
+        <!--事务切入点-->
+        <aop:pointcut id="txPointCut" expression="execution(* com.sicilly.mapper.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+    </aop:config>
+
+</beans>
+```
+
